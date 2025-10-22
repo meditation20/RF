@@ -86,6 +86,7 @@ async function loadLocalIndianRecipes(query = "") {
     if (filtered.length > 0) {
       recipeContainer.innerHTML = filtered
         .map(
+          // Correctly pass the array index
           (r, index) => `
           <div class="recipe-card">
             <img src="${r.image}" alt="${r.title}">
@@ -108,13 +109,13 @@ async function loadLocalIndianRecipes(query = "") {
 function openRecipe(id) {
   localStorage.setItem("selectedRecipeId", id);
   localStorage.removeItem("selectedLocalRecipeId");
-  // FIX: Use replace to ensure a clean navigation and prevent cache issues
+  // FIX: Use replace for robust navigation
   window.location.replace("recipe.html");
 }
 
 function openLocalRecipe(index) {
   localStorage.setItem("selectedLocalRecipeId", index);
   localStorage.removeItem("selectedRecipeId");
-  // FIX: Use replace to ensure a clean navigation and prevent cache issues
+  // FIX: Use replace for robust navigation
   window.location.replace("recipe.html");
 }
