@@ -14,7 +14,7 @@
   },
   {
     "title": "Idli Sambar",
-    "image": "images/idlisambar.jpg",
+    "image": "images/idli_sambar.jpg",
     "ingredients": [
       "Rice - 1 cup",
       "Urad dal - 1/2 cup",
@@ -23,11 +23,11 @@
       "Vegetables - carrot, drumstick, brinjal"
     ],
     "instructions": "Grind soaked rice and dal, ferment overnight, steam idlis. Cook sambar with tamarind and vegetables.",
-    "youtube": "https://www.youtube.com/watch?v=3qQfsEJ2q4A"
+    "youtube": "https://www.youtube.com/watch?v=_QLLo1b5Zcw"
   },
   {
     "title": "Paneer Butter Masala",
-    "image": "images/paneerbuttermasala.jpg",
+    "image": "images/paneer_butter_masala.jpg",
     "ingredients": [
       "Paneer - 200g",
       "Tomatoes - 3",
@@ -36,6 +36,6 @@
       "Spices - garam masala, chili powder, salt"
     ],
     "instructions": "Cook tomatoes with spices, blend into smooth gravy, then simmer paneer cubes with butter and cream.",
-    "youtube": "https://www.youtube.com/watch?v=3fV7IhB9UAA"
+    "youtube": "https://www.youtube.com/watch?v=bUounn_Bmy4"
   }
 ]
