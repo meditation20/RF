@@ -86,11 +86,13 @@ async function loadLocalIndianRecipes(query = "") {
     if (filtered.length > 0) {
       recipeContainer.innerHTML = filtered
         .map(
-          (r) => `
+          // 🛑 FIX: Use 'index' (the array position) instead of 'r.id' 
+          // to correctly pass the ID to openLocalRecipe()
+          (r, index) => `
           <div class="recipe-card">
             <img src="${r.image}" alt="${r.title}">
             <h3>${r.title}</h3>
-            <button class="btn" onclick="openLocalRecipe(${r.id})">👨‍🍳 Show Recipe</button>
+            <button class="btn" onclick="openLocalRecipe(${index})">👨‍🍳 Show Recipe</button>
             <p class="source-label">🔹 Source: Local Indian Data</p>
           </div>`
         )
@@ -107,10 +109,12 @@ async function loadLocalIndianRecipes(query = "") {
 // 🟩 Navigation Functions
 function openRecipe(id) {
   localStorage.setItem("selectedRecipeId", id);
+  localStorage.removeItem("selectedLocalRecipeId"); // Clear local ID
   window.location.href = "recipe.html";
 }
 
-function openLocalRecipe(id) {
-  localStorage.setItem("selectedLocalRecipeId", id);
+function openLocalRecipe(index) {
+  localStorage.setItem("selectedLocalRecipeId", index);
+  localStorage.removeItem("selectedRecipeId"); // Clear API ID
   window.location.href = "recipe.html";
 }
