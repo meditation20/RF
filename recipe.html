@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipe Details</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="detail-page">
+  <div class="container">
+    <h1>🍴 Recipe Details</h1>
+    <div id="recipeDetails" class="recipe-details"></div>
+    <button class="btn" onclick="goBack()">⬅️ Back to Search</button>
+  </div>
+
+  <script>
+    const API_KEY = "089c5f803d4941859e76f1f83d561808"; 
+    const recipeDetails = document.getElementById("recipeDetails");
+    const recipeId = localStorage.getItem("selectedRecipeId");
+    const localRecipeIndex = parseInt(localStorage.getItem("selectedLocalRecipeId")); 
+
+    // MODIFIED: Function to process raw text into an HTML Ordered List (OL)
+    function formatInstructions(rawInstructions) {
+        if (!rawInstructions) {
+            return "<p>Instructions not available or too complex for direct parsing. Please check the source link.</p>";
+        }
+        
+        // 1. Clean up HTML tags and normalize whitespace
+        let cleanedInstructions = rawInstructions.replace(/<[^>]*>?/gm, '').trim();
+        
+        // 2. Split the text into steps. This regex handles steps separated by:
+        //    a) A number followed by a period (e.g., "1. Preheat...")
+        //    b) A period followed by a space (standard sentence separation, e.g., "Melt butter. Combine...")
+        const steps = cleanedInstructions
+            .split(/(\d+\.\s*)|(?<=[.?!])\s+/g) // Split by numbers/periods OR sentence-ending punctuation + space
+            .filter(segment => segment && segment.trim() !== ''); // Filter out empty or null entries
+
+        // 3. Recombine parts and format into <li> tags
+        let listItems = [];
+        let currentStep = "";
+        
+        // The split above often separates markers (like "1.") from the text.
+        // If the steps array looks too fragmented, we use a safer sentence split.
+        if (steps.length < 2) {
+            // Safer split: Just use period followed by space, removing the step marker if present.
+             listItems = cleanedInstructions
+                .split(/\.\s+/)
+                .map(item => item.trim())
+                .filter(item => item.length > 5); // Ensure steps aren't too short (like single words)
+        } else {
+            // Use the complex split result, cleaning up any remaining numbering
+            listItems = steps
+                .map(item => item.trim())
+                .filter(item => item.length > 5 && !/^\d+\.$/.test(item)) // Filter out short fragments and bare numbers
+                .map(item => item.replace(/^\d+\.\s*/, '')); // Remove the number from the start of the item if it was missed
+        }
+        
+        // Final sanity check: If we have at least 2 distinct, reasonable steps, use the list.
+        if (listItems.length > 1) {
+            return `<ol>${listItems.map(item => `<li>${item.endsWith('.') ? item : item + '.'}</li>`).join('')}</ol>`;
+        }
+        
+        // Fallback: If parsing fails or only one large block remains, use the paragraph with pre-line.
+        return `<p>${cleanedInstructions}</p>`;
+    }
+
+
+    async function loadRecipeDetails() {
+      if (recipeId) {
+        await loadFromAPI(recipeId);
+      } else if (!isNaN(localRecipeIndex)) {
+        await loadFromLocal(localRecipeIndex);
+      } else {
+        recipeDetails.innerHTML = "<p>No recipe selected.</p>";
+      }
+    }
+
+    async function loadFromAPI(id) {
+      recipeDetails.innerHTML = "<p class='loading-temp'>Fetching recipe details...</p>";
+      
+      const url = `https://api.spoonacular.com/recipes/${id}/information?includeNutrition=false&apiKey=${API_KEY}`;
+      try {
+        const response = await fetch(url);
+        const recipe = await response.json();
+
+        if (!recipe || recipe.status === 'failure') {
+            recipeDetails.innerHTML = "<p>⚠️ Recipe not found in Spoonacular database or quota limit reached.</p>";
+            return;
+        }
+
+        const ingredients = recipe.extendedIngredients
+          .map((i) => `<li>${i.original}</li>`)
+          .join("");
+
+        // Use the new formatter function
+        const instructionsHTML = formatInstructions(recipe.instructions);
+        
+        const youtubeSearch = `https://www.youtube.com/results?search_query=${encodeURIComponent(
+          recipe.title + " recipe"
+        )}`;
+        
+        recipeDetails.innerHTML = `
+          <div class="recipe-card">
+            <img src="${recipe.image}" alt="${recipe.title}" />
+            <h2>${recipe.title}</h2>
+            <div class="recipe-info">
+              <strong>🧂 Ingredients:</strong>
+              <ul>${ingredients}</ul>
+              <strong>👨‍🍳 Instructions:</strong>
+              ${instructionsHTML} 
+            </div>
+            <a class="btn" href="${recipe.sourceUrl}" target="_blank">📖 View Source</a>
+            <a class="btn" href="${youtubeSearch}" target="_blank">🎥 Watch Video</a>
+          </div>
+          <p class="source-label">🔹 Data Source: Spoonacular API</p>
+        `;
+      } catch (error) {
+        recipeDetails.innerHTML = "<p>⚠️ Failed to load recipe details.</p>";
+        console.error(error);
+      }
+    }
+
+    async function loadFromLocal(index) {
+      recipeDetails.innerHTML = "<p class='loading-temp'>Loading local recipe details...</p>";
+
+      const response = await fetch("indianRecipes.json");
+      const data = await response.json();
+      const recipe = data[index]; 
+
+      if (!recipe) {
+        recipeDetails.innerHTML = "<p>Recipe not found in local data.</p>";
+        return;
+      }
+      
+      // Use the new formatter function for local data
+      const instructionsHTML = formatInstructions(recipe.instructions);
+
+
+      const youtubeLink = recipe.youtube;
+      
+      const ingredients = recipe.ingredients.map((i) => `<li>${i}</li>`).join("");
+
+      recipeDetails.innerHTML = `
+        <div class="recipe-card">
+          <img src="${recipe.image}" alt="${recipe.title}" />
+          <h2>${recipe.title}</h2>
+          <div class="recipe-info">
+            <strong>🧂 Ingredients:</strong>
+            <ul>${ingredients}</ul>
+            <strong>👨‍🍳 Instructions:</strong>
+            ${instructionsHTML}
+          </div>
+          <a class="btn" href="${youtubeLink}" target="_blank">🎥 Watch Video</a>
+        </div>
+        <p class="source-label">🔹 Data Source: Local (indianRecipes.json)</p>
+      `;
+    }
+
+    function goBack() {
+      localStorage.removeItem("selectedRecipeId");
+      localStorage.removeItem("selectedLocalRecipeId");
+      window.location.href = "index.html";
+    }
+
+    loadRecipeDetails();
+  </script>
+</body>
+</html>

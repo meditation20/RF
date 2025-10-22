@@ -1,0 +1,217 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  background: linear-gradient(to right, #f8cdda, #1d2b64);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px;
+}
+
+/* Base colors for the overall container background (index.html, recipe.html) */
+.container {
+  width: 100%;
+  max-width: 950px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  color: #fff; /* Default text color for titles/headers */
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-size: 2rem;
+  color: #fff;
+}
+
+/* --- SEARCH PAGE STYLES (index.html) --- */
+
+.search-page .recipe-card {
+  /* ORIGINAL index.html look: semi-transparent dark background, white text */
+  background: rgba(255, 255, 255, 0.15); 
+  color: #fff;
+}
+
+.search-page .source-label {
+  color: #ddd;
+}
+
+/* --- DETAIL PAGE STYLES (recipe.html) --- */
+
+.detail-page body {
+  color: #333; /* Dark gray for all body text for contrast */
+}
+
+.detail-page .recipe-card {
+  /* MODIFIED for contrast: nearly opaque white background, dark text */
+  background: rgba(255, 255, 255, 0.95); 
+  color: #333; 
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.detail-page .container {
+  color: #333; /* Ensure text outside card is also dark */
+}
+
+.detail-page h1 {
+  color: #fff; /* Keep the main page title white for branding */
+}
+
+.detail-page .source-label {
+  color: #777; /* Legible gray */
+}
+
+/* --- Shared/Utility Styles (Buttons, Search Bar, etc.) --- */
+
+.search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+input, select, button {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+}
+
+input {
+  flex: 1 1 300px;
+}
+
+select {
+  background-color: #fff;
+  color: #333;
+}
+
+button {
+  background-color: #ff7f50;
+  color: white;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background-color: #ff4f20;
+}
+
+.loading {
+  text-align: center;
+  display: none;
+  font-size: 1.2rem;
+  margin-top: 20px;
+}
+
+.recipe-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.recipe-card {
+  border-radius: 15px;
+  overflow: hidden;
+  text-align: center;
+  padding: 15px;
+  transition: transform 0.3s ease;
+}
+
+.recipe-card:hover {
+  transform: scale(1.02);
+}
+
+.recipe-card img {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.recipe-card h3 {
+  margin: 10px 0;
+  font-size: 1.2rem;
+}
+
+/* --- Better layout for ingredients & instructions --- */
+.recipe-info {
+  text-align: left;
+  font-size: 1rem;
+  line-height: 1.8;
+  margin-top: 15px;
+  padding: 10px 20px;
+}
+
+.recipe-info strong {
+  color: #ff7f50; 
+  display: block;
+  margin: 15px 0 8px;
+  font-size: 1.1rem;
+}
+
+.recipe-info ul {
+  list-style: disc;
+  margin: 10px 0 20px 35px;
+  padding-left: 5px;
+}
+
+.recipe-info p {
+  white-space: pre-line;
+  margin: 10px 0 20px;
+  padding-left: 8px;
+  word-wrap: break-word;
+}
+
+.recipe-info ol {
+  margin: 10px 0 20px 40px;
+  padding-left: 5px;
+}
+
+.recipe-info ol li {
+  margin-bottom: 8px;
+  line-height: 1.8;
+}
+
+.btn {
+  text-decoration: none;
+  color: #fff; 
+  background-color: #007bff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+.btn:hover {
+  background-color: #0056b3;
+}
+
+.recipe-details {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.recipe-details img {
+  max-width: 100%;
+  border-radius: 10px;
+}
+
+.recipe-details ul {
+  list-style: disc;
+  text-align: left;
+  margin-left: 30px;
+}
+
+.recipe-details h2 {
+  margin: 15px 0;
+}
