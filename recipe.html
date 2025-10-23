@@ -5,29 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Recipe Details</title>
   <link rel="stylesheet" href="style.css" />
-</head>
+  </head>
 <body class="detail-page">
-  <div class="container">
-    <h1>🍴 Recipe Details</h1>
-    <div id="recipeDetails" class="recipe-details"></div>
-    <button class="btn" onclick="goBack()">⬅️ Back to Search</button>
+  <div id="app-container">
+    <h2>Recipe Details</h2>
+    <div id="recipeDetails">Loading recipe...</div>
+    <button class="back-btn" onclick="goBack()">⬅️ Back to Search</button>
   </div>
 
   <script>
+    // Moved API Key and main variables outside the function
     const API_KEY = "089c5f803d4941859e76f1f83d561808"; 
-    const recipeDetails = document.getElementById("recipeDetails");
-    const recipeId = localStorage.getItem("selectedRecipeId");
-    const localRecipeIndex = parseInt(localStorage.getItem("selectedLocalRecipeId")); 
-
-    // NEW: Function to explicitly open the video URL in a new window/tab
-    function openVideo(url) {
-        window.open(url, '_blank');
-    }
+    const recipeContainer = document.getElementById("recipeDetails");
     
+    // 🛑 FIX: Look for the 'Index' key
+    const localRecipeIndex = parseInt(localStorage.getItem("selectedLocalRecipeIndex")); 
+    const recipeId = localStorage.getItem("selectedRecipeId");
+    
+    // Function to handle return navigation
+    function goBack() {
+        localStorage.removeItem("selectedRecipeId");
+        localStorage.removeItem("selectedLocalRecipeIndex"); // Corrected key name
+        window.location.href = "index.html";
+    }
+
     // Function to process raw text into an HTML Ordered List (OL)
     function formatInstructions(rawInstructions) {
         if (!rawInstructions) {
-            return "<p>Instructions not available or too complex for direct parsing. Please check the source link.</p>";
+            return "<p>No detailed instructions available.</p>";
         }
         
         let cleanedInstructions = rawInstructions.replace(/<[^>]*>?/gm, '').trim();
@@ -40,7 +45,7 @@
         
         if (steps.length < 2) {
              listItems = cleanedInstructions
-                .split(/\.\s+/)
+                .split(/\.\s+/) 
                 .map(item => item.trim())
                 .filter(item => item.length > 5); 
         } else {
@@ -59,100 +64,98 @@
 
 
     async function loadRecipeDetails() {
-      if (recipeId) {
-        await loadFromAPI(recipeId);
-      } else if (!isNaN(localRecipeIndex)) {
+      // ⚠️ FIX: Check for the index value
+      if (!isNaN(localRecipeIndex) && localRecipeIndex >= 0) { 
         await loadFromLocal(localRecipeIndex);
-      } else {
-        recipeDetails.innerHTML = "<p>No recipe selected.</p>";
+      } 
+      else if (recipeId) {
+        await loadFromAPI(recipeId);
+      } 
+      else {
+        recipeContainer.innerHTML = `<p class="error">No recipe selected.</p>`;
       }
     }
 
-    async function loadFromAPI(id) {
-      recipeDetails.innerHTML = "<p class='loading-temp'>Fetching recipe details...</p>";
-      
-      const url = `https://api.spoonacular.com/recipes/${id}/information?includeNutrition=false&apiKey=${API_KEY}`;
-      try {
-        const response = await fetch(url);
-        const recipe = await response.json();
-
-        if (!recipe || recipe.status === 'failure') {
-            recipeDetails.innerHTML = "<p>⚠️ Recipe not found in Spoonacular database or quota limit reached.</p>";
-            return;
-        }
-
-        const ingredients = recipe.extendedIngredients
-          .map((i) => `<li>${i.original}</li>`)
-          .join("");
-
-        const instructionsHTML = formatInstructions(recipe.instructions);
-        
-        const youtubeSearch = `https://www.youtube.com/results?search_query=${encodeURIComponent(
-          recipe.title + " recipe"
-        )}`;
-        
-        recipeDetails.innerHTML = `
-          <div class="recipe-card">
-            <img src="${recipe.image}" alt="${recipe.title}" />
-            <h2>${recipe.title}</h2>
-            <div class="recipe-info">
-              <strong>🧂 Ingredients:</strong>
-              <ul>${ingredients}</ul>
-              <strong>👨‍🍳 Instructions:</strong>
-              ${instructionsHTML} 
-            </div>
-            <a class="btn" href="${recipe.sourceUrl}" target="_blank">📖 View Source</a>
-            <button class="btn" onclick="openVideo('${youtubeSearch}')">🎥 Watch Video</button>
-          </div>
-          <p class="source-label">🔹 Data Source: Spoonacular API</p>
-        `;
-      } catch (error) {
-        recipeDetails.innerHTML = "<p>⚠️ Failed to load recipe details.</p>";
-        console.error(error);
-      }
-    }
 
     async function loadFromLocal(index) {
-      recipeDetails.innerHTML = "<p class='loading-temp'>Loading local recipe details...</p>";
+        recipeContainer.innerHTML = "Loading local recipe details...";
+        
+        try {
+            const res = await fetch("indianRecipes.json");
+            const data = await res.json();
+            // 🛑 FIX: Access recipe by array index
+            const recipe = data[index]; 
+            
+            if (!recipe) {
+                recipeContainer.innerHTML = `<p class="error">Recipe not found in local data at index ${index}.</p>`;
+                return;
+            }
 
-      const response = await fetch("indianRecipes.json");
-      const data = await response.json();
-      const recipe = data[index]; 
+            const ingredientsHTML = recipe.ingredients
+                .map(i => `<li>${i}</li>`).join("");
 
-      if (!recipe) {
-        recipeDetails.innerHTML = "<p>Recipe not found in local data.</p>";
-        return;
-      }
-      
-      const instructionsHTML = formatInstructions(recipe.instructions);
-
-      // The local JSON already has the direct YouTube link
-      const youtubeLink = recipe.youtube; 
-      
-      const ingredients = recipe.ingredients.map((i) => `<li>${i}</li>`).join("");
-
-      recipeDetails.innerHTML = `
-        <div class="recipe-card">
-          <img src="${recipe.image}" alt="${recipe.title}" />
-          <h2>${recipe.title}</h2>
-          <div class="recipe-info">
-            <strong>🧂 Ingredients:</strong>
-            <ul>${ingredients}</ul>
-            <strong>👨‍🍳 Instructions:</strong>
-            ${instructionsHTML}
-          </div>
-          <button class="btn" onclick="openVideo('${youtubeLink}')">🎥 Watch Video</button>
-        </div>
-        <p class="source-label">🔹 Data Source: Local (indianRecipes.json)</p>
-      `;
+            const instructionsHTML = formatInstructions(recipe.instructions);
+            
+            recipeContainer.innerHTML = `
+              <h2>${recipe.title}</h2>
+              <img src="${recipe.image}" alt="${recipe.title}">
+              <div class="recipe-info">
+                <strong>Ingredients:</strong>
+                <ul>${ingredientsHTML}</ul>
+                <strong>Instructions:</strong>
+                ${instructionsHTML} 
+                <button onclick="window.open('${recipe.youtube}', '_blank')" class="video-btn">🎥 Watch on YouTube</button>
+              </div>
+              <p style="text-align: center; color: #aaa;">🔹 Data Source: Local (indianRecipes.json)</p>
+            `;
+        } catch (error) {
+            console.error(error);
+            recipeContainer.innerHTML = `<p class="error">⚠️ Could not load local recipe details.</p>`;
+        }
     }
 
-    function goBack() {
-      localStorage.removeItem("selectedRecipeId");
-      localStorage.removeItem("selectedLocalRecipeId");
-      window.location.href = "index.html";
+
+    async function loadFromAPI(id) {
+        recipeContainer.innerHTML = "Fetching recipe details...";
+        
+        try {
+            const res = await fetch(
+              `https://api.spoonacular.com/recipes/${id}/information?apiKey=${API_KEY}`
+            );
+            const data = await res.json();
+
+            if (data.status === "failure" || data.code === 402) {
+                 recipeContainer.innerHTML = `<p class="error">⚠️ Failed to load recipe. API Quota Limit may be reached. Try again tomorrow.</p>`;
+                 return;
+            }
+
+            const ingredientsHTML = data.extendedIngredients
+              .map(i => `<li>${i.original}</li>`).join('');
+
+            const instructionsHTML = formatInstructions(data.instructions);
+            
+            const youtubeSearch = `https://www.youtube.com/results?search_query=${encodeURIComponent(data.title + " recipe")}`;
+
+
+            recipeContainer.innerHTML = `
+              <h2>${data.title}</h2>
+              <img src="${data.image}" alt="${data.title}">
+              <div class="recipe-info">
+                <strong>Ingredients:</strong>
+                <ul>${ingredientsHTML}</ul>
+                <strong>Instructions:</strong>
+                ${instructionsHTML}
+                <button onclick="window.open('${youtubeSearch}', '_blank')" class="video-btn">🎥 Watch on YouTube</button>
+              </div>
+              <p style="text-align: center; color: #aaa;">🔹 Data Source: Spoonacular API</p>
+            `;
+
+        } catch (error) {
+             recipeContainer.innerHTML = `<p class="error">⚠️ Failed to load online recipe.</p>`;
+        }
     }
 
+    // Initialize the loading process
     loadRecipeDetails();
   </script>
 </body>

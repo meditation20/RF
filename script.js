@@ -1,4 +1,4 @@
-const API_KEY = "YOUR_SPOONACULAR_API_KEY"; // REMEMBER TO USE YOUR REAL KEY HERE
+const API_KEY = "089c5f803d4941859e76f1f83d561808";
 const searchBtn = document.getElementById("searchBtn");
 const searchInput = document.getElementById("searchInput");
 const cuisineSelect = document.getElementById("cuisineSelect");
@@ -30,7 +30,6 @@ async function fetchRecipes() {
     const data = await res.json();
     
     if (data.results && data.results.length > 0) {
-      // Mark results as from API and push to the combined list
       const apiResults = data.results.map(r => ({ ...r, source: 'api' }));
       allResults.push(...apiResults);
       apiFetched = true;
@@ -47,12 +46,17 @@ async function fetchRecipes() {
           const res = await fetch("indianRecipes.json");
           const data = await res.json();
           
-          // Filter local recipes based on the query
+          // Filter local recipes based on the query (filter by title only)
           const filtered = data.filter((r) => r.title.toLowerCase().includes(query));
 
           if (filtered.length > 0) {
-              // Mark results as local and push to the combined list
-              const localResults = filtered.map(r => ({ ...r, source: 'local' }));
+              // Map the filtered local recipes, preserving their original index for retrieval on recipe.html
+              const localResults = filtered.map((r, index) => ({ 
+                  ...r, 
+                  source: 'local', 
+                  // Use the original index (0, 1, 2) from the JSON file for retrieval
+                  originalIndex: data.findIndex(item => item.title === r.title) 
+              }));
               allResults.push(...localResults);
           }
       } catch (error) {
@@ -62,7 +66,7 @@ async function fetchRecipes() {
 
   loading.style.display = "none";
   
-  // 3. Display all results or a "No Results" message
+  // 3. Display all results
   if (allResults.length > 0) {
     displayCombinedResults(allResults);
   } else {
@@ -70,25 +74,22 @@ async function fetchRecipes() {
   }
 }
 
-// 🟩 NEW: Single function to handle both API and Local results
+// 🟩 Display ALL results (API and Local)
 function displayCombinedResults(results) {
   recipeContainer.innerHTML = results
     .map(
       (r) => {
-        // Use a flag to determine which ID/Title method to use
         const isLocal = r.source === 'local';
-        const recipeIdentifier = isLocal ? `'${r.title}'` : r.id;
+        // Use the originalIndex for local recipes, or the Spoonacular ID for API recipes
+        const identifier = isLocal ? r.originalIndex : r.id; 
         const openFunction = isLocal ? 'openLocalRecipe' : 'openRecipe';
         const sourceLabel = isLocal ? 'Local Indian Data' : 'Spoonacular API';
         
-        // Use the title from the local JSON for image display
-        const imageSrc = isLocal ? r.image : r.image; 
-
         return `
           <div class="recipe-card">
-            <img src="${imageSrc}" alt="${r.title}">
+            <img src="${r.image}" alt="${r.title}">
             <h3>${r.title}</h3>
-            <button class="btn" onclick="${openFunction}(${recipeIdentifier})">👨‍🍳 Show Recipe</button>
+            <button class="btn" onclick="${openFunction}(${identifier})">👨‍🍳 Show Recipe</button>
             <p class="source-label">🔹 Source: ${sourceLabel}</p>
           </div>
         `;
@@ -97,17 +98,15 @@ function displayCombinedResults(results) {
     .join("");
 }
 
-// 🌟 Navigation functions (Unchanged)
+// 🌟 Navigation functions
 function openRecipe(id) {
   localStorage.setItem("selectedRecipeId", id);
-  localStorage.removeItem("selectedLocalRecipeTitle");
-  window.location.href = "recipe.html";
+  localStorage.removeItem("selectedLocalRecipeIndex"); // Corrected key name
+  window.location.replace("recipe.html");
 }
 
-function openLocalRecipe(title) {
-  // Need to wrap title in single quotes in the JS code if it's a string, 
-  // but since we are receiving the string directly here, we just use it.
-  localStorage.setItem("selectedLocalRecipeTitle", title);
+function openLocalRecipe(index) {
+  localStorage.setItem("selectedLocalRecipeIndex", index); // Corrected key name
   localStorage.removeItem("selectedRecipeId");
-  window.location.href = "recipe.html";
+  window.location.replace("recipe.html");
 }
