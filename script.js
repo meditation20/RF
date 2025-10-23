@@ -1,4 +1,4 @@
-const API_KEY = "089c5f803d4941859e76f1f83d561808";
+const API_KEY = "089c5f803d4941859e76f1f83d561808"; 
 const searchBtn = document.getElementById("searchBtn");
 const searchInput = document.getElementById("searchInput");
 const cuisineSelect = document.getElementById("cuisineSelect");
@@ -51,10 +51,10 @@ async function fetchRecipes() {
 
           if (filtered.length > 0) {
               // Map the filtered local recipes, preserving their original index for retrieval on recipe.html
-              const localResults = filtered.map((r, index) => ({ 
+              const localResults = filtered.map((r) => ({ 
                   ...r, 
                   source: 'local', 
-                  // Use the original index (0, 1, 2) from the JSON file for retrieval
+                  // Use the original index from the JSON file for retrieval
                   originalIndex: data.findIndex(item => item.title === r.title) 
               }));
               allResults.push(...localResults);
@@ -101,12 +101,12 @@ function displayCombinedResults(results) {
 // 🌟 Navigation functions
 function openRecipe(id) {
   localStorage.setItem("selectedRecipeId", id);
-  localStorage.removeItem("selectedLocalRecipeIndex"); // Corrected key name
+  localStorage.removeItem("selectedLocalRecipeIndex");
   window.location.replace("recipe.html");
 }
 
 function openLocalRecipe(index) {
-  localStorage.setItem("selectedLocalRecipeIndex", index); // Corrected key name
+  localStorage.setItem("selectedLocalRecipeIndex", index);
   localStorage.removeItem("selectedRecipeId");
   window.location.replace("recipe.html");
 }

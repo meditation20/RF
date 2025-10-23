@@ -5,7 +5,95 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Recipe Details</title>
   <link rel="stylesheet" href="style.css" />
-  </head>
+  <style>
+    /* NOTE: Your provided embedded styles from the previous exchange are kept here */
+    body {
+      background: linear-gradient(135deg, #1a1a1a, #292929);
+      color: white;
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h2 {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 2rem;
+      color: #ffcc70;
+    }
+
+    img {
+      width: 90%;
+      max-width: 400px;
+      border-radius: 15px;
+      margin: 20px auto;
+      display: block;
+      box-shadow: 0 0 20px rgba(255, 204, 112, 0.4);
+    }
+
+    .recipe-info {
+      width: 90%;
+      max-width: 700px;
+      background-color: #202020;
+      border-radius: 20px;
+      padding: 20px 30px;
+      margin-bottom: 40px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .recipe-info strong {
+      color: #ffcc70;
+      font-size: 1.2rem;
+      display: block;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    .recipe-info ul,
+    .recipe-info ol {
+      padding-left: 25px;
+      margin-bottom: 15px;
+      line-height: 1.8;
+    }
+
+    .recipe-info p {
+      line-height: 1.8;
+      text-align: left;
+      margin-bottom: 15px;
+    }
+
+    /* Combined video button/back button styling for clarity */
+    .video-btn, .back-btn { 
+      display: inline-block;
+      margin-top: 15px;
+      background-color: #ffcc70;
+      color: black;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+
+    .video-btn:hover, .back-btn:hover {
+      background-color: #ffaa00;
+      transform: scale(1.05);
+    }
+
+    .error {
+      color: #ff7070;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 30px;
+    }
+  </style>
+</head>
 <body class="detail-page">
   <div id="app-container">
     <h2>Recipe Details</h2>
@@ -14,19 +102,23 @@
   </div>
 
   <script>
-    // Moved API Key and main variables outside the function
-    const API_KEY = "089c5f803d4941859e76f1f83d561808"; 
+    const API_KEY = "089c5f803d4941859e76f1f83d561808";
     const recipeContainer = document.getElementById("recipeDetails");
     
-    // 🛑 FIX: Look for the 'Index' key
+    // Correctly get the index as an integer
     const localRecipeIndex = parseInt(localStorage.getItem("selectedLocalRecipeIndex")); 
     const recipeId = localStorage.getItem("selectedRecipeId");
     
     // Function to handle return navigation
     function goBack() {
         localStorage.removeItem("selectedRecipeId");
-        localStorage.removeItem("selectedLocalRecipeIndex"); // Corrected key name
+        localStorage.removeItem("selectedLocalRecipeIndex"); 
         window.location.href = "index.html";
+    }
+    
+    // NEW: Function to explicitly open the video URL in a new window/tab
+    function openVideo(url) {
+        window.open(url, '_blank');
     }
 
     // Function to process raw text into an HTML Ordered List (OL)
@@ -37,6 +129,7 @@
         
         let cleanedInstructions = rawInstructions.replace(/<[^>]*>?/gm, '').trim();
         
+        // Split by step markers (numbers) or sentence-ending punctuation
         const steps = cleanedInstructions
             .split(/(\d+\.\s*)|(?<=[.?!])\s+/g) 
             .filter(segment => segment && segment.trim() !== ''); 
@@ -59,12 +152,13 @@
             return `<ol>${listItems.map(item => `<li>${item.endsWith('.') ? item : item + '.'}</li>`).join('')}</ol>`;
         }
         
+        // Fallback: single paragraph
         return `<p>${cleanedInstructions}</p>`;
     }
 
 
     async function loadRecipeDetails() {
-      // ⚠️ FIX: Check for the index value
+      // ⚠️ Check if the index is a valid number (0 or greater)
       if (!isNaN(localRecipeIndex) && localRecipeIndex >= 0) { 
         await loadFromLocal(localRecipeIndex);
       } 
@@ -83,7 +177,8 @@
         try {
             const res = await fetch("indianRecipes.json");
             const data = await res.json();
-            // 🛑 FIX: Access recipe by array index
+            
+            // Access recipe by array index
             const recipe = data[index]; 
             
             if (!recipe) {
@@ -104,7 +199,7 @@
                 <ul>${ingredientsHTML}</ul>
                 <strong>Instructions:</strong>
                 ${instructionsHTML} 
-                <button onclick="window.open('${recipe.youtube}', '_blank')" class="video-btn">🎥 Watch on YouTube</button>
+                <button onclick="openVideo('${recipe.youtube}')" class="video-btn">🎥 Watch on YouTube</button>
               </div>
               <p style="text-align: center; color: #aaa;">🔹 Data Source: Local (indianRecipes.json)</p>
             `;
@@ -145,7 +240,7 @@
                 <ul>${ingredientsHTML}</ul>
                 <strong>Instructions:</strong>
                 ${instructionsHTML}
-                <button onclick="window.open('${youtubeSearch}', '_blank')" class="video-btn">🎥 Watch on YouTube</button>
+                <button onclick="openVideo('${youtubeSearch}')" class="video-btn">🎥 Watch on YouTube</button>
               </div>
               <p style="text-align: center; color: #aaa;">🔹 Data Source: Spoonacular API</p>
             `;
