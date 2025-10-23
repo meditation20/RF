@@ -5,155 +5,160 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Recipe Details</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #1a1a1a, #292929);
+      color: white;
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h2 {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 2rem;
+      color: #ffcc70;
+    }
+
+    img {
+      width: 90%;
+      max-width: 400px;
+      border-radius: 15px;
+      margin: 20px auto;
+      display: block;
+      box-shadow: 0 0 20px rgba(255, 204, 112, 0.4);
+    }
+
+    .recipe-info {
+      width: 90%;
+      max-width: 700px;
+      background-color: #202020;
+      border-radius: 20px;
+      padding: 20px 30px;
+      margin-bottom: 40px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .recipe-info strong {
+      color: #ffcc70;
+      font-size: 1.2rem;
+      display: block;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    .recipe-info ul,
+    .recipe-info ol {
+      padding-left: 25px;
+      margin-bottom: 15px;
+      line-height: 1.8;
+    }
+
+    .video-btn {
+      display: inline-block;
+      margin-top: 15px;
+      background-color: #ffcc70;
+      color: black;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+
+    .video-btn:hover {
+      background-color: #ffaa00;
+      transform: scale(1.05);
+    }
+
+    .error {
+      color: #ff7070;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 30px;
+    }
+  </style>
 </head>
-<body class="detail-page">
-  <div class="container">
-    <h1>🍴 Recipe Details</h1>
-    <div id="recipeDetails" class="recipe-details"></div>
-    <button class="btn" onclick="goBack()">⬅️ Back to Search</button>
-  </div>
+<body>
+  <h2>Recipe Details</h2>
+  <div id="recipeDetails">Loading recipe...</div>
 
   <script>
-    const API_KEY = "089c5f803d4941859e76f1f83d561808"; 
-    const recipeDetails = document.getElementById("recipeDetails");
-    const recipeId = localStorage.getItem("selectedRecipeId");
-    const localRecipeIndex = parseInt(localStorage.getItem("selectedLocalRecipeId")); 
+    document.addEventListener("DOMContentLoaded", async () => {
+      const localTitle = localStorage.getItem("selectedLocalRecipeTitle");
+      const recipeId = localStorage.getItem("selectedRecipeId");
+      const recipeContainer = document.getElementById("recipeDetails");
 
-    // NEW: Function to explicitly open the video URL in a new window/tab
-    function openVideo(url) {
-        window.open(url, '_blank');
-    }
-    
-    // Function to process raw text into an HTML Ordered List (OL)
-    function formatInstructions(rawInstructions) {
-        if (!rawInstructions) {
-            return "<p>Instructions not available or too complex for direct parsing. Please check the source link.</p>";
+      if (localTitle) {
+        try {
+          const res = await fetch("indianRecipes.json");
+          const data = await res.json();
+          const recipe = data.find(r => r.title === localTitle);
+
+          if (recipe) {
+            const ingredientsHTML = Array.isArray(recipe.ingredients)
+              ? recipe.ingredients.map(i => `<li>${i}</li>`).join("")
+              : `<p>${recipe.ingredients}</p>`;
+
+            const instructionsHTML = Array.isArray(recipe.instructions)
+              ? recipe.instructions.map(step => `<li>${step}</li>`).join("")
+              : formatInstructions(recipe.instructions);
+
+            recipeContainer.innerHTML = `
+              <h2>${recipe.title}</h2>
+              <img src="${recipe.image}" alt="${recipe.title}">
+              <div class="recipe-info">
+                <strong>Ingredients:</strong>
+                <ul>${ingredientsHTML}</ul>
+                <strong>Instructions:</strong>
+                <ol>${instructionsHTML}</ol>
+                ${
+                  recipe.video
+                    ? `<a href="${recipe.video}" target="_blank" class="video-btn">🎥 Watch on YouTube</a>`
+                    : ""
+                }
+              </div>`;
+          } else {
+            recipeContainer.innerHTML = `<p class="error">Recipe not found.</p>`;
+          }
+        } catch (error) {
+          recipeContainer.innerHTML = `<p class="error">⚠️ Could not load local recipe details.</p>`;
         }
-        
-        let cleanedInstructions = rawInstructions.replace(/<[^>]*>?/gm, '').trim();
-        
-        const steps = cleanedInstructions
-            .split(/(\d+\.\s*)|(?<=[.?!])\s+/g) 
-            .filter(segment => segment && segment.trim() !== ''); 
+      } else if (recipeId) {
+        try {
+          const apiKey = "YOUR_SPOONACULAR_API_KEY";
+          const res = await fetch(
+            `https://api.spoonacular.com/recipes/${recipeId}/information?apiKey=${apiKey}`
+          );
+          const data = await res.json();
 
-        let listItems = [];
-        
-        if (steps.length < 2) {
-             listItems = cleanedInstructions
-                .split(/\.\s+/)
-                .map(item => item.trim())
-                .filter(item => item.length > 5); 
-        } else {
-            listItems = steps
-                .map(item => item.trim())
-                .filter(item => item.length > 5 && !/^\d+\.$/.test(item))
-                .map(item => item.replace(/^\d+\.\s*/, '')); 
-        }
-        
-        if (listItems.length > 1) {
-            return `<ol>${listItems.map(item => `<li>${item.endsWith('.') ? item : item + '.'}</li>`).join('')}</ol>`;
-        }
-        
-        return `<p>${cleanedInstructions}</p>`;
-    }
-
-
-    async function loadRecipeDetails() {
-      if (recipeId) {
-        await loadFromAPI(recipeId);
-      } else if (!isNaN(localRecipeIndex)) {
-        await loadFromLocal(localRecipeIndex);
-      } else {
-        recipeDetails.innerHTML = "<p>No recipe selected.</p>";
-      }
-    }
-
-    async function loadFromAPI(id) {
-      recipeDetails.innerHTML = "<p class='loading-temp'>Fetching recipe details...</p>";
-      
-      const url = `https://api.spoonacular.com/recipes/${id}/information?includeNutrition=false&apiKey=${API_KEY}`;
-      try {
-        const response = await fetch(url);
-        const recipe = await response.json();
-
-        if (!recipe || recipe.status === 'failure') {
-            recipeDetails.innerHTML = "<p>⚠️ Recipe not found in Spoonacular database or quota limit reached.</p>";
-            return;
-        }
-
-        const ingredients = recipe.extendedIngredients
-          .map((i) => `<li>${i.original}</li>`)
-          .join("");
-
-        const instructionsHTML = formatInstructions(recipe.instructions);
-        
-        const youtubeSearch = `https://www.youtube.com/results?search_query=${encodeURIComponent(
-          recipe.title + " recipe"
-        )}`;
-        
-        recipeDetails.innerHTML = `
-          <div class="recipe-card">
-            <img src="${recipe.image}" alt="${recipe.title}" />
-            <h2>${recipe.title}</h2>
+          recipeContainer.innerHTML = `
+            <h2>${data.title}</h2>
+            <img src="${data.image}" alt="${data.title}">
             <div class="recipe-info">
-              <strong>🧂 Ingredients:</strong>
-              <ul>${ingredients}</ul>
-              <strong>👨‍🍳 Instructions:</strong>
-              ${instructionsHTML} 
-            </div>
-            <a class="btn" href="${recipe.sourceUrl}" target="_blank">📖 View Source</a>
-            <button class="btn" onclick="openVideo('${youtubeSearch}')">🎥 Watch Video</button>
-          </div>
-          <p class="source-label">🔹 Data Source: Spoonacular API</p>
-        `;
-      } catch (error) {
-        recipeDetails.innerHTML = "<p>⚠️ Failed to load recipe details.</p>";
-        console.error(error);
+              <strong>Ingredients:</strong>
+              <ul>${data.extendedIngredients.map(i => `<li>${i.original}</li>`).join("")}</ul>
+              <strong>Instructions:</strong>
+              <p>${data.instructions || "No detailed instructions available."}</p>
+            </div>`;
+        } catch (error) {
+          recipeContainer.innerHTML = `<p class="error">⚠️ Failed to load online recipe.</p>`;
+        }
+      } else {
+        recipeContainer.innerHTML = `<p class="error">No recipe selected.</p>`;
       }
-    }
 
-    async function loadFromLocal(index) {
-      recipeDetails.innerHTML = "<p class='loading-temp'>Loading local recipe details...</p>";
-
-      const response = await fetch("indianRecipes.json");
-      const data = await response.json();
-      const recipe = data[index]; 
-
-      if (!recipe) {
-        recipeDetails.innerHTML = "<p>Recipe not found in local data.</p>";
-        return;
+      function formatInstructions(text) {
+        if (!text) return "<p>No instructions available.</p>";
+        const steps = text.split(".").map(s => s.trim()).filter(s => s.length > 2);
+        return steps.map(s => `<li>${s}.</li>`).join("");
       }
-      
-      const instructionsHTML = formatInstructions(recipe.instructions);
-
-      // The local JSON already has the direct YouTube link
-      const youtubeLink = recipe.youtube; 
-      
-      const ingredients = recipe.ingredients.map((i) => `<li>${i}</li>`).join("");
-
-      recipeDetails.innerHTML = `
-        <div class="recipe-card">
-          <img src="${recipe.image}" alt="${recipe.title}" />
-          <h2>${recipe.title}</h2>
-          <div class="recipe-info">
-            <strong>🧂 Ingredients:</strong>
-            <ul>${ingredients}</ul>
-            <strong>👨‍🍳 Instructions:</strong>
-            ${instructionsHTML}
-          </div>
-          <button class="btn" onclick="openVideo('${youtubeLink}')">🎥 Watch Video</button>
-        </div>
-        <p class="source-label">🔹 Data Source: Local (indianRecipes.json)</p>
-      `;
-    }
-
-    function goBack() {
-      localStorage.removeItem("selectedRecipeId");
-      localStorage.removeItem("selectedLocalRecipeId");
-      window.location.href = "index.html";
-    }
-
-    loadRecipeDetails();
+    });
   </script>
 </body>
 </html>
