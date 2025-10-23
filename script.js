@@ -1,4 +1,4 @@
-const API_KEY = "YOUR_SPOONACULAR_API_KEY";
+const API_KEY = "089c5f803d4941859e76f1f83d561808";
 const searchBtn = document.getElementById("searchBtn");
 const searchInput = document.getElementById("searchInput");
 const cuisineSelect = document.getElementById("cuisineSelect");
