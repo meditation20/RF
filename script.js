@@ -1,3 +1,4 @@
+// 🌟 Recipe Finder Main Page with smart Indian fallback
 const API_KEY = "089c5f803d4941859e76f1f83d561808";
 const searchBtn = document.getElementById("searchBtn");
 const searchInput = document.getElementById("searchInput");
@@ -26,18 +27,25 @@ async function fetchRecipes() {
     const data = await res.json();
     loading.style.display = "none";
 
+    // ✅ If Spoonacular returns recipes
     if (data.results && data.results.length > 0) {
       displayRecipeCards(data.results);
-    } else if (
+    } 
+    // ✅ Otherwise, check if query looks Indian or cuisine is Indian
+    else if (
       cuisine === "Indian" ||
       /dal|paneer|biryani|masala|makhni|chole|roti|dosa|sabzi|pulao|tikka|idli|samosa|curry/.test(query)
     ) {
+      console.warn("Likely Indian dish - loading local Indian recipes...");
       loadLocalIndianRecipes(query);
-    } else {
+    } 
+    else {
       recipeContainer.innerHTML = `<p class="no-results">🍳 No recipes found for "${query}". Try another keyword or cuisine.</p>`;
     }
   } catch (err) {
     loading.style.display = "none";
+    console.error("Error:", err);
+    // ✅ If network/API error but search seems Indian, load local recipes
     if (
       cuisine === "Indian" ||
       /dal|paneer|biryani|masala|makhni|chole|roti|dosa|sabzi|pulao|tikka|idli|samosa|curry/.test(query)
@@ -49,7 +57,7 @@ async function fetchRecipes() {
   }
 }
 
-// 🌟 Display cards for Spoonacular API
+// 🟩 Display recipes from Spoonacular
 function displayRecipeCards(recipes) {
   recipeContainer.innerHTML = recipes
     .map(
@@ -64,12 +72,13 @@ function displayRecipeCards(recipes) {
     .join("");
 }
 
-// 🌟 Load local Indian recipes
+// 🟩 Load local Indian recipes from indianRecipes.json
 async function loadLocalIndianRecipes(query = "") {
   try {
     const res = await fetch("indianRecipes.json");
     const data = await res.json();
 
+    // Filter recipes based on query keywords
     const filtered = data.filter((r) =>
       r.title.toLowerCase().includes(query.toLowerCase())
     );
@@ -77,11 +86,12 @@ async function loadLocalIndianRecipes(query = "") {
     if (filtered.length > 0) {
       recipeContainer.innerHTML = filtered
         .map(
-          (r) => `
+          // Correctly pass the array index
+          (r, index) => `
           <div class="recipe-card">
             <img src="${r.image}" alt="${r.title}">
             <h3>${r.title}</h3>
-            <button class="btn" onclick="openLocalRecipe('${r.title}')">👨‍🍳 Show Recipe</button>
+            <button class="btn" onclick="openLocalRecipe(${index})">👨‍🍳 Show Recipe</button>
             <p class="source-label">🔹 Source: Local Indian Data</p>
           </div>`
         )
@@ -90,17 +100,22 @@ async function loadLocalIndianRecipes(query = "") {
       recipeContainer.innerHTML = `<p class="no-results">🍛 No Indian recipes found for "${query}".</p>`;
     }
   } catch (error) {
+    console.error("Failed to load local recipes:", error);
     recipeContainer.innerHTML = `<p class="error">⚠️ Could not load Indian recipes.</p>`;
   }
 }
 
-// 🌟 Navigation functions
+// 🟩 Navigation Functions
 function openRecipe(id) {
   localStorage.setItem("selectedRecipeId", id);
-  window.location.href = "recipe.html";
+  localStorage.removeItem("selectedLocalRecipeId");
+  // FIX: Use replace for robust navigation
+  window.location.replace("recipe.html");
 }
 
-function openLocalRecipe(title) {
-  localStorage.setItem("selectedLocalRecipeTitle", title);
-  window.location.href = "recipe.html";
+function openLocalRecipe(index) {
+  localStorage.setItem("selectedLocalRecipeId", index);
+  localStorage.removeItem("selectedRecipeId");
+  // FIX: Use replace for robust navigation
+  window.location.replace("recipe.html");
 }
