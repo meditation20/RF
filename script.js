@@ -1,5 +1,4 @@
-// 🌟 Recipe Finder Main Page with smart Indian fallback
-const API_KEY = "089c5f803d4941859e76f1f83d561808";
+const API_KEY = "YOUR_SPOONACULAR_API_KEY"; // REMEMBER TO USE YOUR REAL KEY HERE
 const searchBtn = document.getElementById("searchBtn");
 const searchInput = document.getElementById("searchInput");
 const cuisineSelect = document.getElementById("cuisineSelect");
@@ -20,102 +19,95 @@ async function fetchRecipes() {
   recipeContainer.innerHTML = "";
   loading.style.display = "block";
 
-  const url = `https://api.spoonacular.com/recipes/complexSearch?query=${query}&cuisine=${cuisine}&number=8&apiKey=${API_KEY}`;
+  const apiUrl = `https://api.spoonacular.com/recipes/complexSearch?query=${query}&cuisine=${cuisine}&number=8&apiKey=${API_KEY}`;
+  
+  let allResults = [];
+  let apiFetched = false;
 
+  // 1. Attempt to fetch from Spoonacular API
   try {
-    const res = await fetch(url);
+    const res = await fetch(apiUrl);
     const data = await res.json();
-    loading.style.display = "none";
-
-    // ✅ If Spoonacular returns recipes
+    
     if (data.results && data.results.length > 0) {
-      displayRecipeCards(data.results);
-    } 
-    // ✅ Otherwise, check if query looks Indian or cuisine is Indian
-    else if (
-      cuisine === "Indian" ||
-      /dal|paneer|biryani|masala|makhni|chole|roti|dosa|sabzi|pulao|tikka|idli|samosa|curry/.test(query)
-    ) {
-      console.warn("Likely Indian dish - loading local Indian recipes...");
-      loadLocalIndianRecipes(query);
-    } 
-    else {
-      recipeContainer.innerHTML = `<p class="no-results">🍳 No recipes found for "${query}". Try another keyword or cuisine.</p>`;
+      // Mark results as from API and push to the combined list
+      const apiResults = data.results.map(r => ({ ...r, source: 'api' }));
+      allResults.push(...apiResults);
+      apiFetched = true;
     }
   } catch (err) {
-    loading.style.display = "none";
-    console.error("Error:", err);
-    // ✅ If network/API error but search seems Indian, load local recipes
-    if (
-      cuisine === "Indian" ||
-      /dal|paneer|biryani|masala|makhni|chole|roti|dosa|sabzi|pulao|tikka|idli|samosa|curry/.test(query)
-    ) {
-      loadLocalIndianRecipes(query);
-    } else {
-      recipeContainer.innerHTML = `<p class="error">⚠️ Error fetching recipes. Please try again later.</p>`;
-    }
+    console.error("Spoonacular API Fetch Error:", err);
+  }
+
+  // 2. Load local recipes if the query is relevant (Indian/Keywords)
+  const isRelevantToLocal = cuisine === "Indian" || /dal|paneer|biryani|masala|makhni|chole|roti|dosa|sabzi|pulao|tikka|idli|samosa|curry/.test(query);
+
+  if (isRelevantToLocal || !apiFetched) {
+      try {
+          const res = await fetch("indianRecipes.json");
+          const data = await res.json();
+          
+          // Filter local recipes based on the query
+          const filtered = data.filter((r) => r.title.toLowerCase().includes(query));
+
+          if (filtered.length > 0) {
+              // Mark results as local and push to the combined list
+              const localResults = filtered.map(r => ({ ...r, source: 'local' }));
+              allResults.push(...localResults);
+          }
+      } catch (error) {
+          console.error("Local JSON Load Error:", error);
+      }
+  }
+
+  loading.style.display = "none";
+  
+  // 3. Display all results or a "No Results" message
+  if (allResults.length > 0) {
+    displayCombinedResults(allResults);
+  } else {
+    recipeContainer.innerHTML = `<p class="no-results">🍳 No recipes found for "${query}" from either source.</p>`;
   }
 }
 
-// 🟩 Display recipes from Spoonacular
-function displayRecipeCards(recipes) {
-  recipeContainer.innerHTML = recipes
+// 🟩 NEW: Single function to handle both API and Local results
+function displayCombinedResults(results) {
+  recipeContainer.innerHTML = results
     .map(
-      (r) => `
-      <div class="recipe-card">
-        <img src="${r.image}" alt="${r.title}">
-        <h3>${r.title}</h3>
-        <button class="btn" onclick="openRecipe(${r.id})">👨‍🍳 Show Recipe</button>
-        <p class="source-label">🔹 Source: Spoonacular API</p>
-      </div>`
+      (r) => {
+        // Use a flag to determine which ID/Title method to use
+        const isLocal = r.source === 'local';
+        const recipeIdentifier = isLocal ? `'${r.title}'` : r.id;
+        const openFunction = isLocal ? 'openLocalRecipe' : 'openRecipe';
+        const sourceLabel = isLocal ? 'Local Indian Data' : 'Spoonacular API';
+        
+        // Use the title from the local JSON for image display
+        const imageSrc = isLocal ? r.image : r.image; 
+
+        return `
+          <div class="recipe-card">
+            <img src="${imageSrc}" alt="${r.title}">
+            <h3>${r.title}</h3>
+            <button class="btn" onclick="${openFunction}(${recipeIdentifier})">👨‍🍳 Show Recipe</button>
+            <p class="source-label">🔹 Source: ${sourceLabel}</p>
+          </div>
+        `;
+      }
     )
     .join("");
 }
 
-// 🟩 Load local Indian recipes from indianRecipes.json
-async function loadLocalIndianRecipes(query = "") {
-  try {
-    const res = await fetch("indianRecipes.json");
-    const data = await res.json();
-
-    // Filter recipes based on query keywords
-    const filtered = data.filter((r) =>
-      r.title.toLowerCase().includes(query.toLowerCase())
-    );
-
-    if (filtered.length > 0) {
-      recipeContainer.innerHTML = filtered
-        .map(
-          // Correctly pass the array index
-          (r, index) => `
-          <div class="recipe-card">
-            <img src="${r.image}" alt="${r.title}">
-            <h3>${r.title}</h3>
-            <button class="btn" onclick="openLocalRecipe(${index})">👨‍🍳 Show Recipe</button>
-            <p class="source-label">🔹 Source: Local Indian Data</p>
-          </div>`
-        )
-        .join("");
-    } else {
-      recipeContainer.innerHTML = `<p class="no-results">🍛 No Indian recipes found for "${query}".</p>`;
-    }
-  } catch (error) {
-    console.error("Failed to load local recipes:", error);
-    recipeContainer.innerHTML = `<p class="error">⚠️ Could not load Indian recipes.</p>`;
-  }
-}
-
-// 🟩 Navigation Functions
+// 🌟 Navigation functions (Unchanged)
 function openRecipe(id) {
   localStorage.setItem("selectedRecipeId", id);
-  localStorage.removeItem("selectedLocalRecipeId");
-  // FIX: Use replace for robust navigation
-  window.location.replace("recipe.html");
+  localStorage.removeItem("selectedLocalRecipeTitle");
+  window.location.href = "recipe.html";
 }
 
-function openLocalRecipe(index) {
-  localStorage.setItem("selectedLocalRecipeId", index);
+function openLocalRecipe(title) {
+  // Need to wrap title in single quotes in the JS code if it's a string, 
+  // but since we are receiving the string directly here, we just use it.
+  localStorage.setItem("selectedLocalRecipeTitle", title);
   localStorage.removeItem("selectedRecipeId");
-  // FIX: Use replace for robust navigation
-  window.location.replace("recipe.html");
+  window.location.href = "recipe.html";
 }
