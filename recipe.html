@@ -6,10 +6,9 @@
   <title>Recipe Details</title>
   <link rel="stylesheet" href="style.css" />
   <style>
-    /* NOTE: Your provided embedded styles from the previous exchange are kept here */
-    /* body {
-      background: linear-gradient(135deg, #1a1a1a, #292929);
-      color: white;
+    /* NOTE: We assume style.css contains the shared gradient background. */
+    body {
+      color: white; /* Keep page-level text white for elements outside the box */
       font-family: "Poppins", sans-serif;
       margin: 0;
       padding: 0;
@@ -17,36 +16,60 @@
       flex-direction: column;
       align-items: center;
       min-height: 100vh;
+      /* The background color is now ONLY controlled by the external style.css */
     }
 
-    h2 {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 2rem;
-      color: #ffcc70;
+    /* Global page title (outside the white box) */
+    h1 {
+      color: #ff7f50; 
+      margin-bottom: 10px;
+      margin-top: 40px; /* Adjust top margin if needed for spacing from body top */
     }
 
-    img {
+    /* Main container for the entire recipe block (The WHITE Box) */
+    #recipeDetailsContainer { 
+      max-width: 750px; 
+      margin: 20px auto; /* Centers the white box on the gradient background */
       width: 90%;
-      max-width: 400px;
-      border-radius: 15px;
-      margin: 20px auto;
-      display: block;
-      box-shadow: 0 0 20px rgba(255, 204, 112, 0.4);
-    }
-
-    .recipe-info {
-      width: 90%;
-      max-width: 700px;
-      background-color: #202020;
+      
+      background-color: #ffffff;
+      color: #333; /* Dark text for contrast inside the white box */
+      
       border-radius: 20px;
-      padding: 20px 30px;
-      margin-bottom: 40px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      padding: 30px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Title inside the white box */
+    #recipeDetailsContainer h2 {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 2rem;
+      color: #ff7f50;
+    }
+
+    #recipeDetailsContainer img {
+      width: 100%;
+      max-width: 500px;
+      border-radius: 15px;
+      margin: 0 auto 20px auto; /* Centers the image within the white box */
+      display: block;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Recipe Info section (transparent, uses container's white background) */
+    .recipe-info {
+      width: 100%;
+      padding: 0;
+      margin-bottom: 20px;
+      background-color: transparent; 
+      box-shadow: none;
+      text-align: left;
     }
 
     .recipe-info strong {
-      color: #ffcc70;
+      color: #ff7f50;
       font-size: 1.2rem;
       display: block;
       margin-top: 20px;
@@ -62,16 +85,30 @@
 
     .recipe-info p {
       line-height: 1.8;
-      text-align: left;
       margin-bottom: 15px;
     }
 
-    /* Combined video button/back button styling for clarity */
-    /* .video-btn, .back-btn { 
+    /* Styles specifically for centering the video button INSIDE the white box */
+    .video-button-wrapper { /* New wrapper for video button only */
+        text-align: center;
+        margin-top: 20px; /* Space above the button */
+        margin-bottom: 10px; /* Space below the button */
+    }
+
+    /* Styles for the "Back to Search" button (OUTSIDE the white box) */
+    .back-to-search-button-wrapper { /* New wrapper for back button only */
+        text-align: center;
+        margin-top: 30px; /* Space below the white box */
+        margin-bottom: 50px; /* Space from the bottom of the page */
+    }
+
+
+    /* Button Styling */
+    .video-btn, .back-btn { 
       display: inline-block;
-      margin-top: 15px;
-      background-color: #ffcc70;
-      color: black;
+      /* Remove specific margins from here to let wrappers control spacing */
+      background-color: #ff7f50;
+      color: white;
       text-decoration: none;
       padding: 10px 20px;
       border-radius: 10px;
@@ -80,6 +117,7 @@
       border: none;
       cursor: pointer;
     }
+    .back-btn { background-color: #007bff; }
 
     .video-btn:hover, .back-btn:hover {
       background-color: #ffaa00;
@@ -91,37 +129,44 @@
       font-weight: bold;
       text-align: center;
       margin-top: 30px;
-    } */ 
+    }
+    .source-label {
+        text-align: center;
+        color: #aaa; /* This will be gray text on the white background */
+        margin-top: 10px;
+        font-size: 0.9em;
+    }
   </style>
 </head>
 <body class="detail-page">
-  <div id="app-container">
-    <h2>Recipe Details</h2>
-    <div id="recipeDetails">Loading recipe...</div>
-    <button class="back-btn" onclick="goBack()">⬅️ Back to Search</button>
+  <h1 style="color: #ff7f50; margin-bottom: 10px;">🍲 Recipe Finder</h1> 
+  
+  <div id="recipeDetailsContainer">
+    <p style="text-align: center;">Loading recipe...</p>
+  </div>
+
+  <div id="backButtonWrapper" class="back-to-search-button-wrapper">
+    <button onclick="goBack()" class="back-btn">⬅️ Back to Search</button>
   </div>
 
   <script>
-    const API_KEY = "089c5f803d4941859e76f1f83d561808";
-    const recipeContainer = document.getElementById("recipeDetails");
-    
-    // Correctly get the index as an integer
+    const API_KEY = "089c5f803d4941859e76f1f83d561808"; 
+    const recipeContainer = document.getElementById("recipeDetailsContainer");
+    const backButtonWrapper = document.getElementById("backButtonWrapper"); // Get the back button wrapper
+
     const localRecipeIndex = parseInt(localStorage.getItem("selectedLocalRecipeIndex")); 
     const recipeId = localStorage.getItem("selectedRecipeId");
     
-    // Function to handle return navigation
     function goBack() {
         localStorage.removeItem("selectedRecipeId");
         localStorage.removeItem("selectedLocalRecipeIndex"); 
         window.location.href = "index.html";
     }
-    
-    // NEW: Function to explicitly open the video URL in a new window/tab
+
     function openVideo(url) {
         window.open(url, '_blank');
     }
 
-    // Function to process raw text into an HTML Ordered List (OL)
     function formatInstructions(rawInstructions) {
         if (!rawInstructions) {
             return "<p>No detailed instructions available.</p>";
@@ -129,7 +174,6 @@
         
         let cleanedInstructions = rawInstructions.replace(/<[^>]*>?/gm, '').trim();
         
-        // Split by step markers (numbers) or sentence-ending punctuation
         const steps = cleanedInstructions
             .split(/(\d+\.\s*)|(?<=[.?!])\s+/g) 
             .filter(segment => segment && segment.trim() !== ''); 
@@ -149,16 +193,17 @@
         }
         
         if (listItems.length > 1) {
-            return `<ol>${listItems.map(item => `<li>${item.endsWith('.') ? item : item + '.'}</li>`).join('')}</ol>`;
+            return `<ol>${listItems.map(item => '<li>' + (item.endsWith('.') ? item : item + '.') + '</li>').join('')}</ol>`;
         }
         
-        // Fallback: single paragraph
         return `<p>${cleanedInstructions}</p>`;
     }
 
 
     async function loadRecipeDetails() {
-      // ⚠️ Check if the index is a valid number (0 or greater)
+      // Hide the default back button initially, will show it if needed or after content loads
+      backButtonWrapper.style.display = 'none';
+
       if (!isNaN(localRecipeIndex) && localRecipeIndex >= 0) { 
         await loadFromLocal(localRecipeIndex);
       } 
@@ -167,22 +212,23 @@
       } 
       else {
         recipeContainer.innerHTML = `<p class="error">No recipe selected.</p>`;
+        backButtonWrapper.style.display = 'block'; // Show back button for no recipe error
       }
     }
 
 
     async function loadFromLocal(index) {
-        recipeContainer.innerHTML = "Loading local recipe details...";
+        recipeContainer.innerHTML = "<p style='text-align: center;'>Loading local recipe details...</p>";
         
         try {
             const res = await fetch("indianRecipes.json");
             const data = await res.json();
             
-            // Access recipe by array index
             const recipe = data[index]; 
             
             if (!recipe) {
-                recipeContainer.innerHTML = `<p class="error">Recipe not found in local data at index ${index}.</p>`;
+                recipeContainer.innerHTML = `<p class="error">Recipe not found in local data.</p>`;
+                backButtonWrapper.style.display = 'block'; // Show back button on error
                 return;
             }
 
@@ -199,19 +245,21 @@
                 <ul>${ingredientsHTML}</ul>
                 <strong>Instructions:</strong>
                 ${instructionsHTML} 
-                <button onclick="openVideo('${recipe.youtube}')" class="video-btn">🎥 Watch on YouTube</button>
               </div>
-              <p style="text-align: center; color: #aaa;">🔹 Data Source: Local (indianRecipes.json)</p>
+              <div class="video-button-wrapper"> <button onclick="openVideo('${recipe.youtube}')" class="video-btn">🎥 Watch on YouTube</button>
+              </div>
+              <p class="source-label">🔹 Data Source: Local (indianRecipes.json)</p>
             `;
+            backButtonWrapper.style.display = 'block'; // Show back button after successful load
         } catch (error) {
-            console.error(error);
-            recipeContainer.innerHTML = `<p class="error">⚠️ Could not load local recipe details.</p>`;
+            recipeContainer.innerHTML = `<p class="error">⚠️ Could not load local recipe details. Please check console.</p>`;
+            backButtonWrapper.style.display = 'block'; // Show back button on error
         }
     }
 
 
     async function loadFromAPI(id) {
-        recipeContainer.innerHTML = "Fetching recipe details...";
+        recipeContainer.innerHTML = "<p style='text-align: center;'>Fetching recipe details...</p>";
         
         try {
             const res = await fetch(
@@ -221,6 +269,7 @@
 
             if (data.status === "failure" || data.code === 402) {
                  recipeContainer.innerHTML = `<p class="error">⚠️ Failed to load recipe. API Quota Limit may be reached. Try again tomorrow.</p>`;
+                 backButtonWrapper.style.display = 'block'; // Show back button on error
                  return;
             }
 
@@ -240,17 +289,18 @@
                 <ul>${ingredientsHTML}</ul>
                 <strong>Instructions:</strong>
                 ${instructionsHTML}
-                <button onclick="openVideo('${youtubeSearch}')" class="video-btn">🎥 Watch on YouTube</button>
               </div>
-              <p style="text-align: center; color: #aaa;">🔹 Data Source: Spoonacular API</p>
+              <div class="video-button-wrapper"> <button onclick="openVideo('${youtubeSearch}')" class="btn video-btn">🎥 Watch on YouTube</button>
+              </div>
+              <p class="source-label">🔹 Data Source: Spoonacular API</p>
             `;
-
+            backButtonWrapper.style.display = 'block'; // Show back button after successful load
         } catch (error) {
              recipeContainer.innerHTML = `<p class="error">⚠️ Failed to load online recipe.</p>`;
+             backButtonWrapper.style.display = 'block'; // Show back button on error
         }
     }
 
-    // Initialize the loading process
     loadRecipeDetails();
   </script>
 </body>

@@ -5,6 +5,7 @@
   font-family: "Poppins", sans-serif;
 }
 
+/* Original Dark Gradient Page Background */
 body {
   background: linear-gradient(to right, #f8cdda, #1d2b64);
   min-height: 100vh;
@@ -12,9 +13,10 @@ body {
   justify-content: center;
   align-items: flex-start;
   padding: 40px;
+  color: #fff; /* Default text color for the entire page remains white */
 }
 
-/* Base colors for the overall container background (index.html, recipe.html) */
+/* Base container for index.html (Dark/Transparent) */
 .container {
   width: 100%;
   max-width: 950px;
@@ -22,7 +24,7 @@ body {
   border-radius: 20px;
   padding: 30px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-  color: #fff; /* Default text color for titles/headers */
+  color: #fff;
 }
 
 h1 {
@@ -35,41 +37,32 @@ h1 {
 /* --- SEARCH PAGE STYLES (index.html) --- */
 
 .search-page .recipe-card {
-  /* ORIGINAL index.html look: semi-transparent dark background, white text */
+  /* Retain the original semi-transparent look for search results */
   background: rgba(255, 255, 255, 0.15); 
   color: #fff;
 }
 
-.search-page .source-label {
-  color: #ddd;
-}
-
 /* --- DETAIL PAGE STYLES (recipe.html) --- */
 
-.detail-page body {
-  color: #333; /* Dark gray for all body text for contrast */
-}
-
-.detail-page .recipe-card {
-  /* MODIFIED for contrast: nearly opaque white background, dark text */
-  background: rgba(255, 255, 255, 0.95); 
-  color: #333; 
+/* The recipe container itself gets the white background and dark text */
+.detail-page .recipe-info {
+  /* FIX: Apply white background and dark text ONLY to this section */
+  background-color: #ffffff; 
+  color: #333; /* Dark text for high contrast */
+  padding: 30px;
+  border-radius: 15px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  margin-top: 20px;
+  text-align: left;
 }
 
-.detail-page .container {
-  color: #333; /* Ensure text outside card is also dark */
+/* Override strong tags to a dark color inside the white box */
+.detail-page .recipe-info strong {
+  color: #ff7f50; 
 }
 
-.detail-page h1 {
-  color: #fff; /* Keep the main page title white for branding */
-}
 
-.detail-page .source-label {
-  color: #777; /* Legible gray */
-}
-
-/* --- Shared/Utility Styles (Buttons, Search Bar, etc.) --- */
+/* --- Shared/Utility Styles --- */
 
 .search-bar {
   display: flex;
@@ -145,15 +138,11 @@ button:hover {
 
 /* --- Better layout for ingredients & instructions --- */
 .recipe-info {
-  text-align: left;
-  font-size: 1rem;
   line-height: 1.8;
-  margin-top: 15px;
   padding: 10px 20px;
 }
 
 .recipe-info strong {
-  color: #ff7f50; 
   display: block;
   margin: 15px 0 8px;
   font-size: 1.1rem;
